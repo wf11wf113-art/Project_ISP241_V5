@@ -138,3 +138,45 @@ if (endRow >= 0 && endRow < height && endCol >= 0 && endCol < width) {
         }
         return true;
     }
+                                                                                                                            //Егоров
+
+public static void main(String[] args) {
+        try {
+            if (args.length < 1 || args.length > 3 || !SIZES.contains(args[0])) {
+                throw new IllegalArgumentException("Использование: java Words ШИРИНАxВЫСОТА [ФАЙЛ_XML] [ЧИСЛО]");
+            }
+            String[] size = args[0].split("x");
+            int width = Integer.parseInt(size[0]);
+            int height = Integer.parseInt(size[1]);
+            long seed = args.length == 3 ? Long.parseLong(args[2]) : new Random().nextLong();
+            List<String> words = readWords(Path.of(args.length >= 2 ? args[1] : "words.xml"));
+            Puzzle puzzle = generate(width, height, words, new Random(seed));
+            char[][] grid = puzzle.grid();
+            PrintWriter out = new PrintWriter(System.out, true, StandardCharsets.UTF_8);
+            out.printf("Матрица %dx%d | Начальное число %d%n", width, height, seed);
+            for (char[] row : grid) {
+                StringJoiner letters = new StringJoiner(" ");
+                for (char cell : row) letters.add(String.valueOf(cell));
+                out.println(letters);
+            }
+            out.printf("Слова (%d): %s%n", puzzle.words().size(), String.join(", ", puzzle.words()));
+        } catch (Exception error) {
+            System.err.println("Ошибка: " + error.getMessage());
+            System.exit(1);
+        }
+    }
+
+    private static boolean unique(char[][] grid, List<String> words, Map<Integer, List<Line>> paths) {
+        for (String word : words) {
+            boolean palindrome = word.contentEquals(new StringBuilder(word).reverse());
+            int count = 0;
+            for (Line line : paths.get(word.length())) {
+                // Палиндром на одном отрезке считаем один раз.
+                if (palindrome && !line.forward()) continue;
+                if (matches(grid, line, word, false) && ++count > 1) return false;
+            }
+            if (count != 1) return false;
+        }
+        return true;
+    }
+}
